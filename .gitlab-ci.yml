@@ -1,0 +1,132 @@
+stages:
+  - Sponsors
+  - Text
+  - Release
+
+workflow:
+  rules:
+    - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "detached"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: always
+
+hello:
+  image: griefed/gitlab-ci-cd:1.1.0
+  stage: Text
+  script:
+    - |-
+      echo this
+      echo is
+      echo a
+      echo commit
+  rules:
+    - if: '$CI_SERVER_HOST == "git.griefed.de"'
+
+hellotwo:
+  image: griefed/gitlab-ci-cd:1.1.0
+  stage: Text
+  script:
+    - |-
+      echo this
+      echo is
+      echo a
+      echo commit
+
+release_job:
+  stage: Release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: '$CI_COMMIT_TAG && $CI_SERVER_HOST == "git.griefed.de"'
+  script:
+    - echo "Running the release job."
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: 'Release $CI_COMMIT_TAG'
+    description: 'Release created using the release-cli. For the changelog, please see CHANGELOG.md.'
+
+Print Text on commit:
+  image: griefed/gitlab-ci-cd:1.1.0
+  stage: Text
+  script:
+    - |-
+      echo this
+      echo is
+      echo a
+      echo commit
+  rules:
+    - if: '$CI_COMMIT_TAG == null && $CI_SERVER_HOST == "git.griefed.de"'
+
+Print Text on tag:
+  image: griefed/gitlab-ci-cd:1.1.0
+  stage: Text
+  script:
+    - |-
+      if [[ $CI_SERVER_HOST == "git.griefed.de" ]]; then
+        echo "https://$SOME:$TEXT@$CI_SERVER_HOST/$CI_PROJECT_PATH.git"
+        echo $CI_PROJECT_NAME;
+        echo $CI_PROJECT_PATH;
+        echo $CI_PROJECT_URL;
+      else
+        echo "Nay..."
+      fi
+      ls -ahl /tmp
+      ls -ahl /cache
+      echo this
+      echo is
+      echo a
+      echo tag
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+
+Print Text on alpha or beta:
+  image: griefed/gitlab-ci-cd:1.1.0
+  stage: Text
+  script:
+    - |-
+      if [[ $CI_SERVER_HOST == "git.griefed.de" ]]; then
+        echo "https://$SOME:$TEXT@$CI_SERVER_HOST/$CI_PROJECT_PATH.git"
+        echo $CI_PROJECT_NAME;
+        echo $CI_PROJECT_PATH;
+        echo $CI_PROJECT_URL;
+      else
+        echo "Nay..."
+      fi
+      ls -ahl /tmp
+      ls -ahl /cache
+      echo this
+      echo is
+      echo a
+      echo tag
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+-(alpha|beta)\.\d+$/'
+
+Update Sponsors:
+  image: griefed/gitlab-ci-cd:1.0.1
+  stage: Sponsors
+  script:
+    - git clone https://github.com/Griefed/sponsors.git
+    - export NEW=$(<sponsors/README.md)
+    - export OLD=$(<README.md)
+    - |
+      if [[ "$NEW" != "$OLD" ]]; then
+        echo "**** Updating sponsors in README.md ****"
+        rm -f README.md
+        cp .gitlab/readme-template.md README.md
+        sed -i "s~SPONSORS~$NEW~g" README.md
+        echo "**** Sponsors updated:  ****"
+        cat README.md
+        echo "**** Pushing changes to repository ****"
+        CI_PUSH_REPO=`echo "$CI_REPOSITORY_URL $GITLAB_TOKEN" | sed 's/^.*\(@.*\)\s\(.*\)/https:\/\/oauth2:\2\1/g'`
+        git config http.sslverify false
+        git remote set-url --push origin "${CI_PUSH_REPO}"
+        git config user.name "$GITLAB_USER_NAME"
+        git config user.email "$GITLAB_USER_EMAIL"
+        git branch -d update-sponsors || true
+        git checkout -b update-sponsors
+        git add README.md
+        git commit -m "chore(sponsors): Update sponsors"
+        git push origin update-sponsors:${CI_BUILD_REF_NAME} || true
+      fi
+  only:
+    - schedules
