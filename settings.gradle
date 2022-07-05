@@ -1,2 +1,4 @@
-rootProject.name = 'tests'
+rootProject.name = 'serverpackcreator'
+include 'serverpackcreator-api'
+include 'serverpackcreator-webservice'
 
