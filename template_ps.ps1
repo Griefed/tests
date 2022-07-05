@@ -5,587 +5,309 @@
 
 if ( (New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
 {
-    "Warning! Running with administrator-privileges is not recommended."
+    Write-Host "Warning! Running with administrator-privileges is not recommended."
 }
 
-$MINECRAFT_VERSION = "SPC_MINECRAFT_VERSION_SPC"
-$MODLOADER = "SPC_MODLOADER_SPC"
-$MODLOADER_VERSION = "SPC_MODLOADER_VERSION_SPC"
-$ARGS = "SPC_JAVA_ARGS_SPC"
-$JAVA = "SPC_JAVA_SPC"
-$FABRIC_INSTALLER_VERSION = "SPC_FABRIC_INSTALLER_VERSION_SPC"
-$QUILT_INSTALLER_VERSION = "SPC_QUILT_INSTALLER_VERSION_SPC"
-$MINECRAFT_SERVER_URL = "SPC_MINECRAFT_SERVER_URL_SPC"
+$MINECRAFT_VERSION="SPC_MINECRAFT_VERSION_SPC"
+$MODLOADER="SPC_MODLOADER_SPC"
+$MODLOADER_VERSION="SPC_MODLOADER_VERSION_SPC"
+$ARGS="SPC_JAVA_ARGS_SPC"
+$JAVA="SPC_JAVA_SPC"
+$FABRIC_INSTALLER_VERSION="SPC_FABRIC_INSTALLER_VERSION_SPC"
+$QUILT_INSTALLER_VERSION="SPC_QUILT_INSTALLER_VERSION_SPC"
+$MINECRAFT_SERVER_URL="SPC_MINECRAFT_SERVER_URL_SPC"
 
-$FORGE_SERVER_URL = "https://}les.minecraftforge.net/maven/net/minecraftforge/forge/$MINECRAFT_VERSION-$MODLOADER_VERSION/forge-$MINECRAFT_VERSION-$MODLOADER_VERSION-installer.jar"
-$FABRIC_SERVER_URL = "https://maven.fabricmc.net/net/fabricmc/fabric-installer/$FABRIC_INSTALLER_VERSION/fabric-installer-$FABRIC_INSTALLER_VERSION.jar"
-$QUILT_SERVER_URL = "https://maven.quiltmc.org/repository/release/org/quiltmc/quilt-installer/$QUILT_INSTALLER_VERSION/quilt-installer-$QUILT_INSTALLER_VERSION.jar"
-$IMPROVED_FABRIC_LAUNCHER_URL = "https://meta.fabricmc.net/v2/versions/loader/$MINECRAFT_VERSION/$MODLOADER_VERSION/$FABRIC_INSTALLER_VERSION/server/jar"
-# TODO check ps equivalent
+$FORGE_INSTALLER_URL="https://}les.minecraftforge.net/maven/net/minecraftforge/forge/$MINECRAFT_VERSION-$MODLOADER_VERSION/forge-$MINECRAFT_VERSION-$MODLOADER_VERSION-installer.jar"
+$FABRIC_INSTALLER_URL="https://maven.fabricmc.net/net/fabricmc/fabric-installer/$FABRIC_INSTALLER_VERSION/fabric-installer-$FABRIC_INSTALLER_VERSION.jar"
+$QUILT_INSTALLER_URL="https://maven.quiltmc.org/repository/release/org/quiltmc/quilt-installer/$QUILT_INSTALLER_VERSION/quilt-installer-$QUILT_INSTALLER_VERSION.jar"
+$IMPROVED_FABRIC_LAUNCHER_URL="https://meta.fabricmc.net/v2/versions/loader/$MINECRAFT_VERSION/$MODLOADER_VERSION/$FABRIC_INSTALLER_VERSION/server/jar"
 $IMPROVED_FABRIC_LAUNCHER_AVAILABLE = [int][System.Net.WebRequest]::Create($IMPROVED_FABRIC_LAUNCHER_URL).GetResponse().StatusCode
 
 # Variables with do_not_manually_edit are set automatically during script execution,
 # so manually editing them will have no effect, as they will be overridden.
-$FORGE_LOCATION = "do_not_manually_edit"
-$MINECRAFT_SERVER_JAR = "do_not_manually_edit"
-$LAUNCHER_JAR = "do_not_manually_edit"
-$COMMAND = "do_not_manually_edit"
+$FORGE_LOCATION="do_not_manually_edit"
+$MINECRAFT_SERVER_JAR="do_not_manually_edit"
+$LAUNCHER_JAR="do_not_manually_edit"
+$COMMAND="do_not_manually_edit"
 
-function crash()
-{
-    "Exiting..."
+function Crash {
+    Write-Host "Exiting..."
     read -n 1 -s -r -p "Press any key to continue"
     exit 1
 }
 
-# If modloader = Forge, run Forge-speci}c checks
-function setup_forge()
-{
-    "Running Forge checks and setup..."
+# $1 = Filename to check for
+# $2 = Filename to save download as
+# $3 = URL to download $2 from
+# true if the }le was successfully downloaded, false if it already exists
+function downloadIfNotExists {
+    param ($FileToCheck, $FileToDownload, $DownloadURL)
 
-    $MINOR = $MINECRAFT_VERSION.Split(".")
+    if (!(Test-Path -Path $FileToCheck -PathType Leaf)) {
 
-    if (!$MINOR[1] -gt 16)
-    {
+        Write-Host "$FileToCheck could not be found."
+        Write-Host "Downloading $FileToDownload"
+        Write-Host "from $DownloadURL"
 
-        $FORGE_LOCATION = "forge.jar"
-        $LAUNCHER_JAR = "forge.jar"
-        $MINECRAFT_SERVER_JAR = "minecraft_server.$MINECRAFT_VERSION.jar"
-        $COMMAND = "-Dlog4j2.formatMsgNoLookups=true $ARGS -jar $LAUNCHER_JAR nogui"
+        (New-Object Net.WebClient).DownloadFile($DownloadURL, $FileToDownload)
 
+        if (Test-Path -Path $FileToDownload -PathType Leaf) {
+            Write-Host "Download complete."
+            return $true
+        }
+
+    } else {
+        Write-Host "$FileToCheck present."
+        return $false
     }
-    elseif ( $MINOR[1] -gt 16 )
-    {
-
-        $FORGE_LOCATION = "libraries/net/minecraftforge/forge/$MINECRAFT_VERSION-$MODLOADER_VERSION/forge-$MINECRAFT_VERSION-$MODLOADER_VERSION-server.jar"
-        $MINECRAFT_SERVER_JAR = "libraries/net/minecraft/server/$MINECRAFT_VERSION/server-$MINECRAFT_VERSION.jar"
-        $COMMAND = "-Dlog4j2.formatMsgNoLookups=true @user_jvm_args.txt @libraries/net/minecraftforge/forge/$MINECRAFT_VERSION-$MODLOADER_VERSION/unix_args.txt nogui"
-
-        if (!(Test-Path -Path user_jvm_args.txt -PathType Leaf))
-        {
-            "# Xmx and Xms set the maximum and minimum RAM usage, respectively." > user_jvm_args.txt
-            "# They can take any number, followed by an M or a G." >> user_jvm_args.txt
-            "# M means Megabyte, G means Gigabyte." >> user_jvm_args.txt
-            "# For example, to set the maximum to 3GB: -Xmx3G" >> user_jvm_args.txt
-            "# To set the minimum to 2.5GB: -Xms2500M" >> user_jvm_args.txt
-            "# A good default for a modded server is 4GB." >> user_jvm_args.txt
-            "# Uncomment the next line to set it." >> user_jvm_args.txt
-            "# -Xmx4G" >> user_jvm_args.txt
-            $ARGS >> user_jvm_args.txt
-        }
-        else
-        {
-            "user_jvm_args.txt present..."
-        }
-    }
-
-
-    if (!(Test-Path -Path $FORGE_LOCATION -PathType Leaf))
-    {
-        echo "Forge Server JAR-}le not found. Downloading installer..."
-        wget -q --progress = bar --show-progress -O forge-installer.jar $FORGE_SERVER_URL
-
-
-
-        if (!(Test-Path -Path forge-installer.jar -PathType Leaf))
-        {
-
-        echo "Installer downloaded. Installing..."
-        $JAVA -jar forge-installer.jar --installServer
-        }
-
-        if ( $MINOR[1] -gt 16 )
-        {
-
-        rm -f run.bat
-        rm -f run.sh
-
-        }
-        else {
-
-        "Renaming forge-$MINECRAFT_VERSION-$MODLOADER_VERSION.jar to forge.jar"
-        mv forge-$MINECRAFT_VERSION-$MODLOADER_VERSION.jar forge.jar
-
-        }
-
-        if ( -s "$FORGE_LOCATION" ) {
-
-        rm -f forge-installer.jar
-        "Installation complete. forge-installer.jar deleted."
-
-        } else {
-
-        rm -f forge-installer.jar
-        "Something went wrong during the server installation. Please try again in a couple of minutes and check your internet connection."
-        crash
-
-        }
-
-    }
-    else
-    {
-
-        echo "forge-installer.jar not found. Maybe the Forge servers are having trouble."
-        echo "Please try again in a couple of minutes and check your internet connection."
-        crash
-
-    }
-
-} else {
-    echo "${FORGE_LOCATION
-
-
-
-
-
-
-
-
-
-
-} present. Moving on..."
 
 }
 
-# If modloader = Fabric, run Fabric-speci}c checks
-function setup_fabric()
-{
-    echo "Running Fabric checks and setup..."
+# If modloader = Forge, run Forge-speci}c checks
+function setup_forge {
+    "Running Forge checks and setup..."
 
-    if ("$IMPROVED_FABRIC_LAUNCHER_AVAILABLE" = "200")
-    {
+    IFS="." read -ra MINOR <<<"${MINECRAFT_VERSION}"
 
-        echo "Improved Fabric Server Launcher available..."
-        echo "The improved launcher will be used to run this Fabric server."
-        LAUNCHER_JAR = "fabric-server-launcher.jar"
+    if ( ${MINOR[1]} -le 16 ) {
 
-        if ( ! -s "fabric-server-launcher.jar" ) {
+        FORGE_LOCATION = "forge.jar"
+        LAUNCHER_JAR = "forge.jar"
+        MINECRAFT_SERVER_JAR = "minecraft_server.${MINECRAFT_VERSION
+}.jar"
+        COMMAND = "-Dlog4j2.formatMsgNoLookups=true ${ARGS
+} -jar ${LAUNCHER_JAR
+} nogui"
 
-        wget -q --progress = bar --show-progress -O fabric-server-launcher.jar "${IMPROVED_FABRIC_LAUNCHER_URL
+    } else {
 
+        FORGE_LOCATION = "libraries/net/minecraftforge/forge/${MINECRAFT_VERSION
+}-${MODLOADER_VERSION
+}/forge-${MINECRAFT_VERSION
+}-${MODLOADER_VERSION
+}-server.jar"
+        MINECRAFT_SERVER_JAR = "libraries/net/minecraft/server/${MINECRAFT_VERSION
+}/server-${MINECRAFT_VERSION
+}.jar"
+        COMMAND= "-Dlog4j2.formatMsgNoLookups=true @user_jvm_args.txt @libraries/net/minecraftforge/forge/${MINECRAFT_VERSION
+}-${MODLOADER_VERSION
+}/unix_args.txt nogui"
 
+        if ( ! -s "user_jvm_args.txt" ) {
 
+        {
+        "# Xmx and Xms set the maximum and minimum RAM usage, respectively."
+        "# They can take any number, followed by an M or a G."
+        "# M means Megabyte, G means Gigabyte."
+        "# For example, to set the maximum to 3GB: -Xmx3G"
+        "# To set the minimum to 2.5GB: -Xms2500M"
+        "# A good default for a modded server is 4GB."
+        "# Uncomment the next line to set it."
+        "# -Xmx4G"
+        "${ARGS
 
+}"
+        } >>user_jvm_args.txt
 
-
-
-
-
-
-
-        }"
-
-        if ( -s "fabric-server-launcher.jar" ) {
-
-        echo "Successfully downloaded the improved Fabric Server Launcher."
-
-        } else {
-
-        echo "fabric-server-launcher.jar not found. Maybe the Fabric servers are having trouble."
-        echo "Please try again in a couple of minutes and check your internet connection."
-        crash
-
-        }
-
+    } else {
+        "user_jvm_args.txt present..."
     }
 
-    elseif ( ! -s "fabric-server-launch.jar" ) {
+}
 
-    echo "Fabric Server JAR-}le not found. Downloading installer..."
-    LAUNCHER_JAR = "fabric-server-launch.jar"
-    wget -q --progress = bar --show-progress -O fabric-installer.jar "${FABRIC_SERVER_URL
+if ( $(downloadIfNotExist "${FORGE_LOCATION}" "forge-installer.jar" "${FORGE_INSTALLER_URL}") == "true" ) {
 
+"Forge Installer downloaded. Installing..."
+"$JAVA" -jar forge-installer.jar --installServer
 
+if ( ${MINOR[1]
+} -gt 16 ) {
 
+rm -f run.bat
+rm -f run.sh
 
+} else {
 
+"Renaming forge-${MINECRAFT_VERSION
 
+}-${MODLOADER_VERSION
 
+}.jar to forge.jar"
+mv forge-"${MINECRAFT_VERSION
 
+}"-"${MODLOADER_VERSION
 
+}".jar forge.jar
 
+}
 
-    }"
+if ( -s "${FORGE_LOCATION
+}" ) {
 
-    if ( -s "fabric-installer.jar" ) {
+rm -f forge-installer.jar
+rm -f forge-installer.jar.log
+"Installation complete. forge-installer.jar deleted."
 
-    echo "Installer downloaded. Installing..."
-    "$JAVA" -jar fabric-installer.jar server -mcversion "${MINECRAFT_VERSION
+} else {
 
+rm -f forge-installer.jar
+"Something went wrong during the server installation. Please try again in a couple of minutes and check your internet connection."
+crash
 
+}
 
+}
+}
 
+# If modloader = Fabric, run Fabric-speci}c checks
+function setup_fabric {
+"Running Fabric checks and setup..."
 
+if ( "$IMPROVED_FABRIC_LAUNCHER_AVAILABLE" == "200" ) {
 
+"Improved Fabric Server Launcher available..."
+"The improved launcher will be used to run this Fabric server."
+LAUNCHER_JAR="fabric-server-launcher.jar"
 
+downloadIfNotExist "fabric-server-launcher.jar" "fabric-server-launcher.jar" "${IMPROVED_FABRIC_LAUNCHER_URL}" >/dev/null
 
+elseif (condition) {
 
+} ( $(downloadIfNotExist "fabric-server-launch.jar" "fabric-installer.jar" "${FABRIC_INSTALLER_URL}") == "true" ) {
 
-
-
-    }" -loader "${MODLOADER_VERSION
-
-
-
-
-
-
-
-
-
-
-
-
+"Installer downloaded..."
+LAUNCHER_JAR = "fabric-server-launch.jar"
+MINECRAFT_SERVER_JAR = "server.jar"
+"$JAVA" -jar fabric-installer.jar server -mcversion "${MINECRAFT_VERSION
+}" -loader "${MODLOADER_VERSION
 }" -downloadMinecraft
 
 if ( -s "fabric-server-launch.jar" ) {
 
 rm -rf .fabric-installer
 rm -f fabric-installer.jar
-echo "Installation complete. fabric-installer.jar deleted."
+"Installation complete. fabric-installer.jar deleted."
 
 } else {
 
 rm -f fabric-installer.jar
-echo "fabric-server-launch.jar not found. Maybe the Fabric servers are having trouble."
-echo "Please try again in a couple of minutes and check your internet connection."
+"fabric-server-launch.jar not found. Maybe the Fabric servers are having trouble."
+"Please try again in a couple of minutes and check your internet connection."
 crash
 
 }
 
 } else {
 
-echo "fabric-installer.jar not found. Maybe the Fabric servers are having trouble."
-echo "Please try again in a couple of minutes."
-crash
-
-}
-
-} else {
-
-echo "fabric-server-launch.jar present. Moving on..."
+"fabric-server-launch.jar present. Moving on..."
 LAUNCHER_JAR = "fabric-server-launcher.jar"
+MINECRAFT_SERVER_JAR = "server.jar"
 
 }
 
-MINECRAFT_SERVER_JAR = "server.jar"
-COMMAND = "-Dlog4j2.formatMsgNoLookups=true ${ARGS
-
-
-
-
-
-
-
-
-
-
-} -jar ${LAUNCHER_JAR
-
-
-
-
-
-
-
-
-
-
-} nogui"
+COMMAND="-Dlog4j2.formatMsgNoLookups=true ${ARGS} -jar ${LAUNCHER_JAR} nogui"
 }
 
 # If modloader = Quilt, run Quilt-speci}c checks
-function setup_quilt() {
-echo "Running Quilt checks and setup..."
+function setup_quilt {
+"Running Quilt checks and setup..."
 
-if ( ! -s "quilt-server-launch.jar" ) {
+if ( $(downloadIfNotExist "quilt-server-launch.jar" "quilt-installer.jar" "${QUILT_INSTALLER_URL}") == "true" ) {
 
-echo "Quilt Server JAR-}le not found. Downloading installer..."
-wget -q --progress= bar --show-progress -O quilt-installer.jar "${QUILT_SERVER_URL
-
-
-
-
-
-
-
-
-
-
-
-}"
-
-if ( -s "quilt-installer.jar" ) {
-
-echo "Installer downloaded. Installing..."
+"Installer downloaded. Installing..."
 "$JAVA" -jar quilt-installer.jar install server "${MINECRAFT_VERSION
-
-
-
-
-
-
-
-
-
-
-
-
 }" --download-server --install-dir = .
 
 if ( -s "quilt-server-launch.jar" ) {
 
 rm quilt-installer.jar
-echo "Installation complete. quilt-installer.jar deleted."
+"Installation complete. quilt-installer.jar deleted."
 
 } else {
 
 rm -f quilt-installer.jar
-echo "quilt-server-launch.jar not found. Maybe the Quilt servers are having trouble."
-echo "Please try again in a couple of minutes and check your internet connection."
+"quilt-server-launch.jar not found. Maybe the Quilt servers are having trouble."
+"Please try again in a couple of minutes and check your internet connection."
 crash
 
 }
 
 } else {
-
-echo "quilt-installer.jar not found. Maybe the Quilt servers are having trouble."
-echo "Please try again in a couple of minutes and check your internet connection."
-crash
-
+"quilt-server-launch.jar present. Moving on..."
 }
 
-} else {
-echo "quilt-server-launch.jar present. Moving on..."
-}
-
-LAUNCHER_JAR = "quilt-server-launch.jar"
-MINECRAFT_SERVER_JAR = "server.jar"
-COMMAND = "-Dlog4j2.formatMsgNoLookups=true ${ARGS
-
-
-
-
-
-
-
-
-
-
-} -jar ${LAUNCHER_JAR
-
-
-
-
-
-
-
-
-
-
-} nogui"
+LAUNCHER_JAR="quilt-server-launch.jar"
+MINECRAFT_SERVER_JAR="server.jar"
+COMMAND="-Dlog4j2.formatMsgNoLookups=true ${ARGS} -jar ${LAUNCHER_JAR} nogui"
 }
 
 # Check for a minecraft server and download it if necessary
-function minecraft() {
-if ( "${MODLOADER
+function minecraft {
+if ( "${MODLOADER}" == "Fabric" && "$IMPROVED_FABRIC_LAUNCHER_AVAILABLE" == "200" ) {
 
+"Skipping Minecraft Server JAR checks because we are using the improved Fabric Server Launcher."
 
+} else {
 
-
-
-
-
-
-
-
-}" = "Fabric" && "$IMPROVED_FABRIC_LAUNCHER_AVAILABLE" = "200" ) {
-
-echo "Skipping Minecraft Server JAR checks because we are using the improved Fabric Server Launcher."
-
-elseif ( ! -s "${MINECRAFT_SERVER_JAR
-
-
-
-
-
-
-
-
-
-
-}" ) {
-
-echo "Minecraft Server JAR-}le not found. Downloading..."
-wget -q --progress= bar --show-progress -O "${MINECRAFT_SERVER_JAR
-
-
-
-
-
-
-
-
-
-
-
+downloadIfNotExist "${MINECRAFT_SERVER_JAR
+}" "${MINECRAFT_SERVER_JAR
 }" "${MINECRAFT_SERVER_URL
+}" > /dev/null
 
-
-
-
-
-
-
-
-
-
-
-}"
-
-if ( -s "${MINECRAFT_SERVER_JAR
-
-
-
-
-
-
-
-
-
-
-
-}" ) {
-
-echo "Download complete."
-
-} else {
-
-echo "Something went wrong during the server download. Please try again in a couple of minutes and check your internet connection."
-crash
-
-}
-
-} else {
-echo "${MINECRAFT_SERVER_JAR
-
-
-
-
-
-
-
-
-
-
-
-} present. Moving on..."
 }
 }
 
 # Check for eula.txt and generate if necessary
-function eula() {
+function eula{
 if ( ! -s "eula.txt" ) {
 
-echo "Mojang's EULA has not yet been accepted. In order to run a Minecraft server, you must accept Mojang's EULA."
-echo "Mojang's EULA is available to read at https://account.mojang.com/documents/minecraft_eula"
-echo "If you agree to Mojang's EULA then type 'I agree'"
-echo -n "Response: "
+"Mojang's EULA has not yet been accepted. In order to run a Minecraft server, you must accept Mojang's EULA."
+"Mojang's EULA is available to read at https://account.mojang.com/documents/minecraft_eula"
+"If you agree to Mojang's EULA then type 'I agree'"
+-n "Response: "
 read -r ANSWER
 
 if ( "${ANSWER
+}" = = "I agree" ) {
 
+"User agreed to Mojang's EULA."
+"#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula)." >eula.txt
+"eula=true" >>eula.txt
 
+} else {
 
-
-
-
-
-
-
-
-
-}" = "I agree" ) {
-
-echo "User agreed to Mojang's EULA."
-echo "#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula)." >eula.txt
-echo "eula=true" >>eula.txt
-
-else
-
-echo "User did not agree to Mojang's EULA."
-echo "Entered: ${ANSWER
-
-
-
-
-
-
-
-
-
-
-
-
+"User did not agree to Mojang's EULA."
+"Entered: ${ANSWER
 }"
 crash
 
 }
 
 } else {
-echo "eula.txt present. Moving on..."
+"eula.txt present. Moving on..."
 }
 }
 
 # Main
-if ( "${MODLOADER
-
-
-
-
-
-
-
-
-
-
-}" = "Forge" ) {
+if ( "${MODLOADER}" == "Forge" ) {
 
 setup_forge
 
-elseif ( "${MODLOADER
+elseif (condition) {
 
-
-
-
-
-
-
-
-
-
-}" = "Fabric" ) {
+} ( "${MODLOADER}" == "Fabric" ) {
 
 setup_fabric
 
-elseif ( "${MODLOADER
+elseif (condition) {
 
-
-
-
-
-
-
-
-
-
-}" = "Forge" ) {
+} ( "${MODLOADER}" == "Quilt" ) {
 
 setup_quilt
 
 } else {
 
-echo "Incorrect modloader speci}ed."
+"Incorrect modloader specified."
 crash
 
 }
@@ -593,133 +315,23 @@ crash
 minecraft
 eula
 
-echo "Starting server..."
-echo ""
-echo "Minecraft version: ${MINECRAFT_VERSION
-
-
-
-
-
-
-
-
-
-
-}"
-echo "Modloader: ${MODLOADER
-
-
-
-
-
-
-
-
-
-
-}"
-echo "Modloader version: ${MODLOADER_VERSION
-
-
-
-
-
-
-
-
-
-
-}"
-echo "Java path: ${JAVA
-
-
-
-
-
-
-
-
-
-
-}"
-echo "Java version:"
-"${JAVA
-
-
-
-
-
-
-
-
-
-
-}" -version
-echo "Launcher JAR: ${LAUNCHER_JAR
-
-
-
-
-
-
-
-
-
-
-}"
-echo ""
-echo "Java args: ${ARGS
-
-
-
-
-
-
-
-
-
-
-}"
-echo ""
-echo "Run Command: ${JAVA
-
-
-
-
-
-
-
-
-
-
-} ${COMMAND
-
-
-
-
-
-
-
-
-
-
-}"
-echo ""
-
-${JAVA} ${COMMAND
-
-
-
-
-
-
-
-
-
-
-}
-
-echo "Exiting..."
+"Starting server..."
+""
+"Minecraft version: ${MINECRAFT_VERSION}"
+"Modloader: ${MODLOADER}"
+"Modloader version: ${MODLOADER_VERSION}"
+"Java path: ${JAVA}"
+"Java version:"
+"${JAVA}" -version
+"Launcher JAR: ${LAUNCHER_JAR}"
+""
+"Java args: ${ARGS}"
+""
+"Run Command: ${JAVA} ${COMMAND}"
+""
+
+${JAVA} ${COMMAND}
+
+"Exiting..."
 read -n 1 -s -r -p "Press any key to continue"
 exit 0
