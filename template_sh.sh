@@ -24,10 +24,10 @@ IMPROVED_FABRIC_LAUNCHER_AVAILABLE="$(wget --server-response --spider --quiet ${
 
 # Variables with do_not_manually_edit are set automatically during script execution,
 # so manually editing them will have no effect, as they will be overridden.
-FORGE_LOCATION="do_not_manually_edit"
-MINECRAFT_SERVER_JAR="do_not_manually_edit"
-LAUNCHER_JAR="do_not_manually_edit"
-COMMAND="do_not_manually_edit"
+FORGE_JAR_LOCATION="do_not_manually_edit"
+MINECRAFT_SERVER_JAR_LOCATION="do_not_manually_edit"
+LAUNCHER_JAR_LOCATION="do_not_manually_edit"
+SERVER_RUN_COMMAND="do_not_manually_edit"
 
 crash() {
   echo "Exiting..."
@@ -55,24 +55,29 @@ downloadIfNotExist() {
   fi
 }
 
+runJavaCommand() {
+  "$JAVA" ${1}
+}
+
 # If modloader = Forge, run Forge-specific checks
 setup_forge() {
+  echo ""
   echo "Running Forge checks and setup..."
 
   IFS="." read -ra MINOR <<<"${MINECRAFT_VERSION}"
 
   if [[ ${MINOR[1]} -le 16 ]]; then
 
-    FORGE_LOCATION="forge.jar"
-    LAUNCHER_JAR="forge.jar"
-    MINECRAFT_SERVER_JAR="minecraft_server.${MINECRAFT_VERSION}.jar"
-    COMMAND="-Dlog4j2.formatMsgNoLookups=true ${ARGS} -jar ${LAUNCHER_JAR} nogui"
+    FORGE_JAR_LOCATION="forge.jar"
+    LAUNCHER_JAR_LOCATION="forge.jar"
+    MINECRAFT_SERVER_JAR_LOCATION="minecraft_server.${MINECRAFT_VERSION}.jar"
+    SERVER_RUN_COMMAND="-Dlog4j2.formatMsgNoLookups=true ${ARGS} -jar ${LAUNCHER_JAR_LOCATION} nogui"
 
   else
 
-    FORGE_LOCATION="libraries/net/minecraftforge/forge/${MINECRAFT_VERSION}-${MODLOADER_VERSION}/forge-${MINECRAFT_VERSION}-${MODLOADER_VERSION}-server.jar"
-    MINECRAFT_SERVER_JAR="libraries/net/minecraft/server/${MINECRAFT_VERSION}/server-${MINECRAFT_VERSION}.jar"
-    COMMAND="-Dlog4j2.formatMsgNoLookups=true @user_jvm_args.txt @libraries/net/minecraftforge/forge/${MINECRAFT_VERSION}-${MODLOADER_VERSION}/unix_args.txt nogui"
+    FORGE_JAR_LOCATION="libraries/net/minecraftforge/forge/${MINECRAFT_VERSION}-${MODLOADER_VERSION}/forge-${MINECRAFT_VERSION}-${MODLOADER_VERSION}-server.jar"
+    MINECRAFT_SERVER_JAR_LOCATION="libraries/net/minecraft/server/${MINECRAFT_VERSION}/server-${MINECRAFT_VERSION}.jar"
+    SERVER_RUN_COMMAND="-Dlog4j2.formatMsgNoLookups=true @user_jvm_args.txt @libraries/net/minecraftforge/forge/${MINECRAFT_VERSION}-${MODLOADER_VERSION}/unix_args.txt nogui"
 
     if [[ ! -s "user_jvm_args.txt" ]]; then
 
@@ -94,10 +99,10 @@ setup_forge() {
 
   fi
 
-  if [[ $(downloadIfNotExist "${FORGE_LOCATION}" "forge-installer.jar" "${FORGE_INSTALLER_URL}") == "true" ]]; then
+  if [[ $(downloadIfNotExist "${FORGE_JAR_LOCATION}" "forge-installer.jar" "${FORGE_INSTALLER_URL}") == "true" ]]; then
 
     echo "Forge Installer downloaded. Installing..."
-    "$JAVA" -jar forge-installer.jar --installServer
+    runJavaCommand "-jar forge-installer.jar --installServer"
 
     if [[ ${MINOR[1]} -gt 16 ]]; then
 
@@ -111,7 +116,7 @@ setup_forge() {
 
     fi
 
-    if [[ -s "${FORGE_LOCATION}" ]]; then
+    if [[ -s "${FORGE_JAR_LOCATION}" ]]; then
 
       rm -f forge-installer.jar
       rm -f forge-installer.jar.log
@@ -126,26 +131,28 @@ setup_forge() {
     fi
 
   fi
+  echo ""
 }
 
 # If modloader = Fabric, run Fabric-specific checks
 setup_fabric() {
+  echo ""
   echo "Running Fabric checks and setup..."
 
   if [[ "$IMPROVED_FABRIC_LAUNCHER_AVAILABLE" == "200" ]]; then
 
     echo "Improved Fabric Server Launcher available..."
     echo "The improved launcher will be used to run this Fabric server."
-    LAUNCHER_JAR="fabric-server-launcher.jar"
+    LAUNCHER_JAR_LOCATION="fabric-server-launcher.jar"
 
     downloadIfNotExist "fabric-server-launcher.jar" "fabric-server-launcher.jar" "${IMPROVED_FABRIC_LAUNCHER_URL}" >/dev/null
 
   elif [[ $(downloadIfNotExist "fabric-server-launch.jar" "fabric-installer.jar" "${FABRIC_INSTALLER_URL}") == "true" ]]; then
 
     echo "Installer downloaded..."
-    LAUNCHER_JAR="fabric-server-launch.jar"
-    MINECRAFT_SERVER_JAR="server.jar"
-    "$JAVA" -jar fabric-installer.jar server -mcversion "${MINECRAFT_VERSION}" -loader "${MODLOADER_VERSION}" -downloadMinecraft
+    LAUNCHER_JAR_LOCATION="fabric-server-launch.jar"
+    MINECRAFT_SERVER_JAR_LOCATION="server.jar"
+    runJavaCommand "-jar fabric-installer.jar server -mcversion ${MINECRAFT_VERSION} -loader ${MODLOADER_VERSION} -downloadMinecraft"
 
     if [[ -s "fabric-server-launch.jar" ]]; then
 
@@ -165,22 +172,24 @@ setup_fabric() {
   else
 
     echo "fabric-server-launch.jar present. Moving on..."
-    LAUNCHER_JAR="fabric-server-launcher.jar"
-    MINECRAFT_SERVER_JAR="server.jar"
+    LAUNCHER_JAR_LOCATION="fabric-server-launcher.jar"
+    MINECRAFT_SERVER_JAR_LOCATION="server.jar"
 
   fi
 
-  COMMAND="-Dlog4j2.formatMsgNoLookups=true ${ARGS} -jar ${LAUNCHER_JAR} nogui"
+  SERVER_RUN_COMMAND="-Dlog4j2.formatMsgNoLookups=true ${ARGS} -jar ${LAUNCHER_JAR_LOCATION} nogui"
+  echo ""
 }
 
 # If modloader = Quilt, run Quilt-specific checks
 setup_quilt() {
+  echo ""
   echo "Running Quilt checks and setup..."
 
   if [[ $(downloadIfNotExist "quilt-server-launch.jar" "quilt-installer.jar" "${QUILT_INSTALLER_URL}") == "true" ]]; then
 
     echo "Installer downloaded. Installing..."
-    "$JAVA" -jar quilt-installer.jar install server "${MINECRAFT_VERSION}" --download-server --install-dir=.
+    runJavaCommand "-jar quilt-installer.jar install server ${MINECRAFT_VERSION} --download-server --install-dir=."
 
     if [[ -s "quilt-server-launch.jar" ]]; then
 
@@ -200,26 +209,30 @@ setup_quilt() {
     echo "quilt-server-launch.jar present. Moving on..."
   fi
 
-  LAUNCHER_JAR="quilt-server-launch.jar"
-  MINECRAFT_SERVER_JAR="server.jar"
-  COMMAND="-Dlog4j2.formatMsgNoLookups=true ${ARGS} -jar ${LAUNCHER_JAR} nogui"
+  LAUNCHER_JAR_LOCATION="quilt-server-launch.jar"
+  MINECRAFT_SERVER_JAR_LOCATION="server.jar"
+  SERVER_RUN_COMMAND="-Dlog4j2.formatMsgNoLookups=true ${ARGS} -jar ${LAUNCHER_JAR_LOCATION} nogui"
+  echo ""
 }
 
 # Check for a minecraft server and download it if necessary
 minecraft() {
+  echo ""
   if [[ "${MODLOADER}" == "Fabric" && "$IMPROVED_FABRIC_LAUNCHER_AVAILABLE" == "200" ]]; then
 
     echo "Skipping Minecraft Server JAR checks because we are using the improved Fabric Server Launcher."
 
   else
 
-    downloadIfNotExist "${MINECRAFT_SERVER_JAR}" "${MINECRAFT_SERVER_JAR}" "${MINECRAFT_SERVER_URL}" >/dev/null
+    downloadIfNotExist "${MINECRAFT_SERVER_JAR_LOCATION}" "${MINECRAFT_SERVER_JAR_LOCATION}" "${MINECRAFT_SERVER_URL}" >/dev/null
 
   fi
+  echo ""
 }
 
 # Check for eula.txt and generate if necessary
 eula() {
+  echo ""
   if [[ ! -s "eula.txt" ]]; then
 
     echo "Mojang's EULA has not yet been accepted. In order to run a Minecraft server, you must accept Mojang's EULA."
@@ -245,6 +258,7 @@ eula() {
   else
     echo "eula.txt present. Moving on..."
   fi
+  echo ""
 }
 
 # Main
@@ -270,23 +284,23 @@ fi
 minecraft
 eula
 
-echo "Starting server..."
 echo ""
+echo "Starting server..."
 echo "Minecraft version: ${MINECRAFT_VERSION}"
 echo "Modloader: ${MODLOADER}"
 echo "Modloader version: ${MODLOADER_VERSION}"
+echo ""
 echo "Java path: ${JAVA}"
 echo "Java version:"
 "${JAVA}" -version
-echo "Launcher JAR: ${LAUNCHER_JAR}"
-echo ""
+echo "Launcher JAR: ${LAUNCHER_JAR_LOCATION}"
 echo "Java args: ${ARGS}"
-echo ""
-echo "Run Command: ${JAVA} ${COMMAND}"
+echo "Run Command: ${JAVA} ${SERVER_RUN_COMMAND}"
 echo ""
 
-${JAVA} ${COMMAND}
+runJavaCommand ${SERVER_RUN_COMMAND}
 
+echo ""
 echo "Exiting..."
 read -n 1 -s -r -p "Press any key to continue"
 exit 0
