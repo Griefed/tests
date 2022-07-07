@@ -114,27 +114,25 @@ Function SetupForge
         $script:ForgeJarLocation = "forge.jar"
         $script:LauncherJarLocation = "forge.jar"
         $script:MinecraftServerJarLocation = "minecraft_server." + $script:MinecraftVersion + ".jar"
-        $script:ServerRunCommand = "-Dlog4j2.formatMsgNoLookups=true " + $script:Args + " -jar " + $script:LauncherJarLocation + " nogui"
+        $script:ServerRunCommand = "'-Dlog4j2.formatMsgNoLookups=true " + $script:Args + "' -jar " + $script:LauncherJarLocation + " nogui"
     }
     else
     {
         $script:ForgeJarLocation = "libraries/net/minecraftforge/forge/" + $script:MinecraftVersion + "-" + $script:ModLoaderVersion + "/forge-" + $script:MinecraftVersion + "-" + $script:ModLoaderVersion + "-server.jar"
         $script:MinecraftServerJarLocation = "libraries/net/minecraft/server/" + $script:MinecraftVersion + "/server-" + $script:MinecraftVersion + ".jar"
-        $script:ServerRunCommand = "-Dlog4j2.formatMsgNoLookups=true @user_jvm_args.txt @libraries/net/minecraftforge/forge/" + $script:MinecraftVersion + "-" + $script:ModLoaderVersion + "/unix_args.txt nogui"
+        $script:ServerRunCommand = "'-Dlog4j2.formatMsgNoLookups=true' @user_jvm_args.txt @libraries/net/minecraftforge/forge/" + $script:MinecraftVersion + "-" + $script:ModLoaderVersion + "/unix_args.txt nogui"
 
         if (!(Test-Path -Path 'user_jvm_args.txt' -PathType Leaf))
         {
-            @"
-            # Xmx and Xms set the maximum and minimum RAM usage, respectively.
-            # They can take any number, followed by an M or a G.
-            # M means Megabyte, G means Gigabyte.
-            # For example, to set the maximum to 3GB: -Xmx3G
-            # To set the minimum to 2.5GB: -Xms2500M
-            # A good default for a modded server is 4GB.
-            # Uncomment the next line to set it.
-            # -Xmx4G
-            $script:Args
-            "@ > user_jvm_args.txt
+            "# Xmx and Xms set the maximum and minimum RAM usage, respectively." > user_jvm_args.txt
+            "# They can take any number, followed by an M or a G." >> user_jvm_args.txt
+            "# M means Megabyte, G means Gigabyte." >> user_jvm_args.txt
+            "# For example, to set the maximum to 3GB: -Xmx3G" >> user_jvm_args.txt
+            "# To set the minimum to 2.5GB: -Xms2500M" >> user_jvm_args.txt
+            "# A good default for a modded server is 4GB." >> user_jvm_args.txt
+            "# Uncomment the next line to set it." >> user_jvm_args.txt
+            "# -Xmx4G" >> user_jvm_args.txt
+            "$script:Args" >> user_jvm_args.txt
         }
         else
         {
@@ -213,7 +211,7 @@ Function SetupFabric
         $script:LauncherJarLocation = "fabric-server-launcher.jar"
         $script:MinecraftServerJarLocation = "server.jar"
     }
-    $script:ServerRunCommand = "-Dlog4j2.formatMsgNoLookups=true " + $script:Args + " -jar " + $script:LauncherJarLocation + " nogui"
+    $script:ServerRunCommand = "'-Dlog4j2.formatMsgNoLookups=true " + $script:Args + "' -jar " + $script:LauncherJarLocation + " nogui"
     ""
 }
 
@@ -249,7 +247,7 @@ Function SetupQuilt
     }
     $script:LauncherJarLocation = "quilt-server-launch.jar"
     $script:MinecraftServerJarLocation = "server.jar"
-    $script:ServerRunCommand = "-Dlog4j2.formatMsgNoLookups=true " + $script:Args + " -jar " + $script:LauncherJarLocation + " nogui"
+    $script:ServerRunCommand = "'-Dlog4j2.formatMsgNoLookups=true " + $script:Args + "' -jar " + $script:LauncherJarLocation + " nogui"
     ""
 }
 
