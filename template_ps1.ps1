@@ -33,6 +33,22 @@ $MinecraftServerJarLocation = "do_not_manually_edit"
 $LauncherJarLocation = "do_not_manually_edit"
 $ServerRunCommand = "do_not_manually_edit"
 
+Function DeleteFileSilently
+{
+    param ($FileToDelete)
+
+    $ErrorActionPreference = "SilentlyContinue";
+    if ((Get-Item $FileToDelete).PSIsContainer)
+    {
+        Remove-Item $FileToDelete -Recurse
+    }
+    else
+    {
+        Remove-Item $FileToDelete
+    }
+    $ErrorActionPreference = "Continue";
+}
+
 Function PauseScript
 {
     Write-Host "Press any key to continue" -ForegroundColor Yellow
@@ -108,15 +124,17 @@ Function SetupForge
 
         if (!(Test-Path -Path 'user_jvm_args.txt' -PathType Leaf))
         {
-            "# Xmx and Xms set the maximum and minimum RAM usage, respectively." > user_jvm_args.txt
-            "# They can take any number, followed by an M or a G." >> user_jvm_args.txt
-            "# M means Megabyte, G means Gigabyte." >> user_jvm_args.txt
-            "# For example, to set the maximum to 3GB: -Xmx3G" >> user_jvm_args.txt
-            "# To set the minimum to 2.5GB: -Xms2500M" >> user_jvm_args.txt
-            "# A good default for a modded server is 4GB." >> user_jvm_args.txt
-            "# Uncomment the next line to set it." >> user_jvm_args.txt
-            "# -Xmx4G" >> user_jvm_args.txt
-            "$script:Args" >> user_jvm_args.txt
+            @"
+            # Xmx and Xms set the maximum and minimum RAM usage, respectively.
+            # They can take any number, followed by an M or a G.
+            # M means Megabyte, G means Gigabyte.
+            # For example, to set the maximum to 3GB: -Xmx3G
+            # To set the minimum to 2.5GB: -Xms2500M
+            # A good default for a modded server is 4GB.
+            # Uncomment the next line to set it.
+            # -Xmx4G
+            $script:Args
+            "@ > user_jvm_args.txt
         }
         else
         {
@@ -131,8 +149,8 @@ Function SetupForge
 
         if ($MINOR[1] -gt 16)
         {
-            Remove-Item 'run.bat'
-            Remove-Item 'run.sh'
+            DeleteFileSilently 'run.bat'
+            DeleteFileSilently 'run.sh'
         }
         else
         {
@@ -141,13 +159,13 @@ Function SetupForge
         }
         if ((Test-Path -Path $ForgeJarLocation -PathType Leaf))
         {
-            Remove-Item 'forge-installer.jar'
-            Remove-Item 'forge-installer.jar.log'
+            DeleteFileSilently 'forge-installer.jar'
+            DeleteFileSilently 'forge-installer.jar.log'
             "Installation complete. forge-installer.jar deleted."
         }
         else
         {
-            Remove-Item 'forge-installer.jar'
+            DeleteFileSilently 'forge-installer.jar'
             "Something went wrong during the server installation. Please try again in a couple of minutes and check your internet connection."
             Crash
         }
@@ -177,13 +195,13 @@ Function SetupFabric
 
         if (!(Test-Path -Path 'fabric-server-launch.jar' -PathType Leaf))
         {
-            Remove-Item '.fabric-installer' -Recurse
-            Remove-Item 'fabric-installer.jar'
+            DeleteFileSilently '.fabric-installer'
+            DeleteFileSilently 'fabric-installer.jar'
             "Installation complete. fabric-installer.jar deleted."
         }
         else
         {
-            Remove-Item 'fabric-installer.jar'
+            DeleteFileSilently 'fabric-installer.jar'
             "fabric-server-launch.jar not found. Maybe the Fabric servers are having trouble."
             "Please try again in a couple of minutes and check your internet connection."
             Crash
@@ -213,12 +231,12 @@ Function SetupQuilt
 
         if (!(Test-Path -Path 'quilt-server-launch.jar' -PathType Leaf))
         {
-            Remove-Item 'quilt-installer.jar'
+            DeleteFileSilently 'quilt-installer.jar'
             "Installation complete. quilt-installer.jar deleted."
         }
         else
         {
-            Remove-Item 'quilt-installer.jar'
+            DeleteFileSilently 'quilt-installer.jar'
             "quilt-server-launch.jar not found. Maybe the Quilt servers are having trouble."
             "Please try again in a couple of minutes and check your internet connection."
             Crash
