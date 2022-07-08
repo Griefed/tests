@@ -85,7 +85,7 @@ Function DownloadIfNotExists
         Write-Host "Downloading $FileToDownload"
         Write-Host "from $DownloadURL"
 
-        (New-Object Net.WebClient).DownloadFile($DownloadURL, $FileToDownload)
+        Invoke-WebRequest -URI "$DownloadURL" -OutFile "$FileToDownload"
 
         if (Test-Path -Path $FileToDownload -PathType Leaf)
         {
@@ -155,6 +155,7 @@ Function SetupForge
             "Renaming forge-$script:MinecraftVersion-$script:ModLoaderVersion.jar to forge.jar"
             Move-Item "forge-" + $script:MinecraftVersion + "-" + $script:ModLoaderVersion + ".jar" 'forge.jar'
         }
+
         if ((Test-Path -Path $ForgeJarLocation -PathType Leaf))
         {
             DeleteFileSilently 'forge-installer.jar'
@@ -184,6 +185,7 @@ Function SetupFabric
         $script:LauncherJarLocation = "fabric-server-launcher.jar"
         (DownloadIfNotExists "fabric-server-launcher.jar" "fabric-server-launcher.jar" $script:ImprovedFabricLauncherUrl) > $null
     }
+    # TODO check for code 400 for URL https://meta.fabricmc.net/v2/versions/loader/MCVERSION/FABRICVERSION/server/json
     elseif ( (DownloadIfNotExists "fabric-server-launch.jar" "fabric-installer.jar" $script:FabricInstallerUrl))
     {
         "Installer downloaded..."
@@ -191,7 +193,7 @@ Function SetupFabric
         $script:MinecraftServerJarLocation = "server.jar"
         RunJavaCommand "-jar fabric-installer.jar server -mcversion $script:MinecraftVersion -loader $script:ModLoaderVersion -downloadMinecraft"
 
-        if (!(Test-Path -Path 'fabric-server-launch.jar' -PathType Leaf))
+        if ((Test-Path -Path 'fabric-server-launch.jar' -PathType Leaf))
         {
             DeleteFileSilently '.fabric-installer'
             DeleteFileSilently 'fabric-installer.jar'

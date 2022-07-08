@@ -40,7 +40,7 @@ public class Main {
           new File(savePrefix + "Fabric_Old_start." + template),
           FileUtils.readFileToString(new File("template_" + template + "." + template), StandardCharsets.UTF_8)
               .replace("SPC_SERVERPACKCREATOR_VERSION_SPC", "3.8.0")
-              .replace("SPC_MINECRAFT_VERSION_SPC", "1.2.2")
+              .replace("SPC_MINECRAFT_VERSION_SPC", "1.12.2")
               .replace(
                   "SPC_MINECRAFT_SERVER_URL_SPC",
                   "https://launcher.mojang.com/v1/objects/1b557e7b033b583cd9f66746b7a9ab1ec1673ced/server.jar")
