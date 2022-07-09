@@ -7,7 +7,7 @@ if [[ "$(id -u)" = "0" ]]; then
   echo "Warning! Running with administrator-privileges is not recommended."
 fi
 
-MINECRAFT_VERSION="1.16.5"
+MINECRAFT_VERSION="1.12.2"
 MODLOADER="Quilt"
 MODLOADER_VERSION="0.17.1-beta.5"
 ARGS="-Xmx8192M -Xms1024M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=15 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true"
@@ -37,7 +37,7 @@ downloadIfNotExist() {
     echo "${1} could not be found." >&2
     echo "Downloading ${2}" >&2
     echo "from ${3}" >&2
-    wget -q --progress=bar --show-progress -O "${2}" "${3}"
+    wget -q --progress=bar --show-progress -O "./${2}" "${3}"
     if [[ -s "${2}" ]]; then
       echo "Download complete." >&2
       echo "true"
@@ -49,15 +49,16 @@ downloadIfNotExist() {
 }
 
 runJavaCommand() {
-  "$JAVA" "${1}"
+  "$JAVA" ${1}
 }
 
 # If modloader = Forge, run Forge-specific checks
 setup_forge() {
   echo ""
   echo "Running Forge checks and setup..."
-  # TODO check forge available
+
   FORGE_INSTALLER_URL="https://files.minecraftforge.net/maven/net/minecraftforge/forge/${MINECRAFT_VERSION}-${MODLOADER_VERSION}/forge-${MINECRAFT_VERSION}-${MODLOADER_VERSION}-installer.jar"
+
   FORGE_JAR_LOCATION="do_not_manually_edit"
   IFS="." read -ra MINOR <<<"${MINECRAFT_VERSION}"
 
@@ -133,8 +134,10 @@ setup_forge() {
 setup_fabric() {
   echo ""
   echo "Running Fabric checks and setup..."
-  # TODO check fabric available
+
   FABRIC_INSTALLER_URL="https://maven.fabricmc.net/net/fabricmc/fabric-installer/${FABRIC_INSTALLER_VERSION}/fabric-installer-${FABRIC_INSTALLER_VERSION}.jar"
+  FABRIC_CHECK_URL="https://meta.fabricmc.net/v2/versions/loader/${MINECRAFT_VERSION}/${MODLOADER_VERSION}/server/json"
+  FABRIC_AVAILABLE="$(wget --server-response --spider --quiet ${FABRIC_CHECK_URL} 2>&1 | awk 'NR==1{print $2}')"
   IMPROVED_FABRIC_LAUNCHER_URL="https://meta.fabricmc.net/v2/versions/loader/${MINECRAFT_VERSION}/${MODLOADER_VERSION}/${FABRIC_INSTALLER_VERSION}/server/jar"
   IMPROVED_FABRIC_LAUNCHER_AVAILABLE="$(wget --server-response --spider --quiet ${IMPROVED_FABRIC_LAUNCHER_URL} 2>&1 | awk 'NR==1{print $2}')"
 
@@ -143,8 +146,12 @@ setup_fabric() {
     echo "Improved Fabric Server Launcher available..."
     echo "The improved launcher will be used to run this Fabric server."
     LAUNCHER_JAR_LOCATION="fabric-server-launcher.jar"
-
     downloadIfNotExist "fabric-server-launcher.jar" "fabric-server-launcher.jar" "${IMPROVED_FABRIC_LAUNCHER_URL}" >/dev/null
+
+  elif [[ "${FABRIC_AVAILABLE}" != "200" ]]; then
+
+    echo "Fabric is not available for Minecraft ${MINECRAFT_VERSION}, Fabric ${MODLOADER_VERSION}."
+    crash
 
   elif [[ $(downloadIfNotExist "fabric-server-launch.jar" "fabric-installer.jar" "${FABRIC_INSTALLER_URL}") == "true" ]]; then
 
@@ -184,10 +191,17 @@ setup_fabric() {
 setup_quilt() {
   echo ""
   echo "Running Quilt checks and setup..."
-  # TODO check quilt available
-  QUILT_INSTALLER_URL="https://maven.quiltmc.org/repository/release/org/quiltmc/quilt-installer/${QUILT_INSTALLER_VERSION}/quilt-installer-${QUILT_INSTALLER_VERSION}.jar"
 
-  if [[ $(downloadIfNotExist "quilt-server-launch.jar" "quilt-installer.jar" "${QUILT_INSTALLER_URL}") == "true" ]]; then
+  QUILT_INSTALLER_URL="https://maven.quiltmc.org/repository/release/org/quiltmc/quilt-installer/${QUILT_INSTALLER_VERSION}/quilt-installer-${QUILT_INSTALLER_VERSION}.jar"
+  QUILT_CHECK_URL="https://meta.fabricmc.net/v2/versions/intermediary/${MINECRAFT_VERSION}"
+  QUILT_AVAILABLE="$(wget -qO- ${QUILT_CHECK_URL})"
+
+  if [[ "${#QUILT_AVAILABLE}" -eq "2" ]]; then
+
+    echo "Quilt is not available for Minecraft ${MINECRAFT_VERSION}, Quilt ${MODLOADER_VERSION}."
+    crash
+
+  elif [[ $(downloadIfNotExist "quilt-server-launch.jar" "quilt-installer.jar" "${QUILT_INSTALLER_URL}") == "true" ]]; then
 
     echo "Installer downloaded. Installing..."
     runJavaCommand "-jar quilt-installer.jar install server ${MINECRAFT_VERSION} --download-server --install-dir=."
@@ -302,7 +316,7 @@ echo "Java version:"
 "${JAVA}" -version
 echo ""
 
-runJavaCommand ${SERVER_RUN_COMMAND}
+runJavaCommand "${SERVER_RUN_COMMAND}"
 
 echo ""
 echo "Exiting..."
