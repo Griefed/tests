@@ -20,7 +20,7 @@ public class Main {
 
       FileUtils.writeStringToFile(
           new File(savePrefix + "Quilt_New_start." + template),
-          FileUtils.readFileToString(new File("template." + template), StandardCharsets.UTF_8)
+          FileUtils.readFileToString(new File("default_template." + template), StandardCharsets.UTF_8)
               .replace("SPC_SERVERPACKCREATOR_VERSION_SPC", "3.8.0")
               .replace("SPC_MINECRAFT_VERSION_SPC", "1.16.5")
               .replace(
@@ -38,7 +38,7 @@ public class Main {
 
       FileUtils.writeStringToFile(
           new File(savePrefix + "Quilt_Old_start." + template),
-          FileUtils.readFileToString(new File("template." + template), StandardCharsets.UTF_8)
+          FileUtils.readFileToString(new File("default_template." + template), StandardCharsets.UTF_8)
               .replace("SPC_SERVERPACKCREATOR_VERSION_SPC", "3.8.0")
               .replace("SPC_MINECRAFT_VERSION_SPC", "1.12.2")
               .replace(
@@ -56,7 +56,7 @@ public class Main {
 
       FileUtils.writeStringToFile(
           new File(savePrefix + "Fabric_Old_start." + template),
-          FileUtils.readFileToString(new File("template." + template), StandardCharsets.UTF_8)
+          FileUtils.readFileToString(new File("default_template." + template), StandardCharsets.UTF_8)
               .replace("SPC_SERVERPACKCREATOR_VERSION_SPC", "3.8.0")
               .replace("SPC_MINECRAFT_VERSION_SPC", "1.12.2")
               .replace(
@@ -74,7 +74,7 @@ public class Main {
 
       FileUtils.writeStringToFile(
           new File(savePrefix + "Fabric_New_start." + template),
-          FileUtils.readFileToString(new File("template." + template), StandardCharsets.UTF_8)
+          FileUtils.readFileToString(new File("default_template." + template), StandardCharsets.UTF_8)
               .replace("SPC_SERVERPACKCREATOR_VERSION_SPC", "3.8.0")
               .replace("SPC_MINECRAFT_VERSION_SPC", "1.18.2")
               .replace(
@@ -92,7 +92,7 @@ public class Main {
 
       FileUtils.writeStringToFile(
           new File(savePrefix + "Forge_Old_start." + template),
-          FileUtils.readFileToString(new File("template." + template), StandardCharsets.UTF_8)
+          FileUtils.readFileToString(new File("default_template." + template), StandardCharsets.UTF_8)
               .replace("SPC_SERVERPACKCREATOR_VERSION_SPC", "3.8.0")
               .replace("SPC_MINECRAFT_VERSION_SPC", "1.16.5")
               .replace(
@@ -111,7 +111,7 @@ public class Main {
       FileUtils.writeStringToFile(
           new File(savePrefix + "Forge_New_start." + template),
           FileUtils.readFileToString(
-                  new File("template." + template), StandardCharsets.UTF_8)
+                  new File("default_template." + template), StandardCharsets.UTF_8)
               .replace("SPC_SERVERPACKCREATOR_VERSION_SPC", "3.8.0")
               .replace("SPC_MINECRAFT_VERSION_SPC", "1.18.2")
               .replace(
