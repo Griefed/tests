@@ -1,37 +1,23 @@
 package de.griefed;
 
-import de.griefed.FabricLoaderDetails.Details;
-import de.griefed.FabricLoaderDetails.Library;
-import de.griefed.QuiltIntermediary.Intermediary;
-import java.io.IOException;
-import java.util.Map;
+import java.util.List;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.FileHeader;
 
 public class Main {
 
-  public static void main(String[] args) throws IOException {
-    QuiltIntermediary quiltIntermediary = new QuiltIntermediary();
+  public static void main(String[] args) throws ZipException {
 
-    for (Map.Entry<String, Intermediary> entry : quiltIntermediary.getIntermediaries().entrySet()) {
-      System.out.println(entry.getKey());
-      System.out.println("    " + entry.getValue().getVersion());
-      System.out.println("    " + entry.getValue().getMaven());
-      System.out.println("    " + entry.getValue().isStable());
-    }
+    List<FileHeader> headersValid = new ZipFile("Survive_Create_Prosper_4_valid.zip").getFileHeaders();
+    List<FileHeader> headersInvalid = new ZipFile("Survive_Create_Prosper_4_invalid.zip").getFileHeaders();
 
-    FabricLoaderDetails fabricLoaderDetails = new FabricLoaderDetails();
+    System.out.println("Valid");
+    headersValid.forEach(fileHeader -> System.out.println(fileHeader.getFileName()));
 
-    Details details = fabricLoaderDetails.getDetails("1.18.2","0.14.8");
+    System.out.println();
 
-    System.out.println(details.getId());
-    System.out.println(details.getInheritsFrom());
-    System.out.println(details.getReleaseTime());
-    System.out.println(details.getTime());
-    System.out.println(details.getType());
-    System.out.println(details.getMainClass());
-    System.out.println(details.getArguments());
-    for (Library library : details.getLibraries()) {
-      System.out.println(library.getName());
-      System.out.println(library.getUrl());
-    }
+    System.out.println("Invalid");
+    headersInvalid.forEach(fileHeader -> System.out.println(fileHeader.getFileName()));
   }
 }
