@@ -1,78 +1,34 @@
 package de.griefed;
 
+import com.electronwill.nightconfig.toml.TomlParser;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
-import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
-import net.lingala.zip4j.model.FileHeader;
-import org.apache.commons.io.FileUtils;
+import java.util.Map;
 
 public class Main {
 
-  public static void main(String[] args) throws ZipException {
+  public static void main(String[] args) {
 
-    ZipFile valid = new ZipFile("Survive_Create_Prosper_4_valid.zip");
-    ZipFile invalid = new ZipFile("Survive_Create_Prosper_4_invalid.zip");
-    ZipFile jar = new ZipFile("ServerPackCreator-dev.jar");
+    TomlParser parser = new TomlParser();
 
-    List<FileHeader> headersValid = valid.getFileHeaders();
-    List<FileHeader> headersInvalid = invalid.getFileHeaders();
-    List<FileHeader> headersJar = jar.getFileHeaders();
+    TomlScanner tomlScanner = new TomlScanner(parser);
 
-    String extractPreFix = "temp/";
+    File[] files =
+        new File("C:\\Minecraft\\Game\\Instances\\Fantasia Adventures\\mods").listFiles();
 
-    System.out.println("Valid");
-    headersValid.forEach(
-        fileHeader -> {
-          if (!fileHeader.isDirectory()) {
-            System.out.println("  " + fileHeader.getFileName());
-          }
-        });
+    Map<String, List<String>> result = tomlScanner.scan(files);
 
     System.out.println();
+    System.out.println("Excluded:");
+    result.get("excluded").forEach(mod -> System.out.println("  " + mod));
 
-    System.out.println("Invalid");
-    headersInvalid.forEach(
-        fileHeader -> {
-          if (!fileHeader.isDirectory()) {
-            System.out.println("  " + fileHeader.getFileName());
-          }
-        });
+    files =
+        new File("C:\\Minecraft\\Game\\Instances\\Survive Create Prosper 4 (1)\\mods").listFiles();
+
+    result = tomlScanner.scan(files);
 
     System.out.println();
-
-    System.out.println("ServerPackCreator");
-    headersJar.forEach(
-        fileHeader -> {
-          System.out.println("  " + fileHeader.getFileName());
-          if (fileHeader.getFileName().equals("BOOT-INF/lib/artemis-journal-2.19.1.jar")) {
-
-            File file = new File(extractPreFix + fileHeader.getFileName());
-
-            if (!file.exists()) {
-              try {
-
-                FileUtils.copyInputStreamToFile(jar.getInputStream(fileHeader), file);
-
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-            }
-
-            try (ZipFile zipFile = new ZipFile(file)) {
-
-              System.out.println("  " + file.getName());
-              zipFile.getFileHeaders().forEach(fileHeader1 -> System.out.println("      " + fileHeader1));
-
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        });
-  }
-
-  private static void getFileFromJarInJar(ZipFile initialJar, String fileOrDirToGet, String... embeddedJars) {
-
+    System.out.println("Excluded:");
+    result.get("excluded").forEach(mod -> System.out.println("  " + mod));
   }
 }
