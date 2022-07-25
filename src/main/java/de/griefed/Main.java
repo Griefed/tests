@@ -2,7 +2,10 @@ package de.griefed;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.TreeSet;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
@@ -10,69 +13,45 @@ import org.apache.commons.io.FileUtils;
 
 public class Main {
 
-  public static void main(String[] args) throws ZipException {
+  private static String matcher = "[\\w+\\/]+(blockstates|models\\/blocks|textures\\/block)\\/.*";
 
-    ZipFile valid = new ZipFile("Survive_Create_Prosper_4_valid.zip");
-    ZipFile invalid = new ZipFile("Survive_Create_Prosper_4_invalid.zip");
-    ZipFile jar = new ZipFile("ServerPackCreator-dev.jar");
+  public static void main(String[] args) {
 
-    List<FileHeader> headersValid = valid.getFileHeaders();
-    List<FileHeader> headersInvalid = invalid.getFileHeaders();
-    List<FileHeader> headersJar = jar.getFileHeaders();
+    Collection<File> files = FileUtils.listFiles(new File("C:\\Minecraft\\Game\\Instances\\Survive Create Prosper 4\\mods"), new String[] {"jar"}, true);
 
-    String extractPreFix = "temp/";
-
-    System.out.println("Valid");
-    headersValid.forEach(
-        fileHeader -> {
-          if (!fileHeader.isDirectory()) {
-            System.out.println("  " + fileHeader.getFileName());
-          }
-        });
-
-    System.out.println();
-
-    System.out.println("Invalid");
-    headersInvalid.forEach(
-        fileHeader -> {
-          if (!fileHeader.isDirectory()) {
-            System.out.println("  " + fileHeader.getFileName());
-          }
-        });
-
-    System.out.println();
-
-    System.out.println("ServerPackCreator");
-    headersJar.forEach(
-        fileHeader -> {
-          System.out.println("  " + fileHeader.getFileName());
-          if (fileHeader.getFileName().equals("BOOT-INF/lib/artemis-journal-2.19.1.jar")) {
-
-            File file = new File(extractPreFix + fileHeader.getFileName());
-
-            if (!file.exists()) {
-              try {
-
-                FileUtils.copyInputStreamToFile(jar.getInputStream(fileHeader), file);
-
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-            }
-
-            try (ZipFile zipFile = new ZipFile(file)) {
-
-              System.out.println("  " + file.getName());
-              zipFile.getFileHeaders().forEach(fileHeader1 -> System.out.println("      " + fileHeader1));
-
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        });
+    for (File file : getBlueMapResources(files)) {
+      System.out.println(file.getName());
+    }
   }
 
-  private static void getFileFromJarInJar(ZipFile initialJar, String fileOrDirToGet, String... embeddedJars) {
+  private static TreeSet<File> getBlueMapResources(Collection<File> files) {
+    TreeSet<File> resources = new TreeSet<>();
+    for (File file : files) {
+      try (ZipFile zipFile = new ZipFile(file)) {
 
+        if (isBlueMapResourceMod(zipFile)) {
+          resources.add(file);
+        }
+
+      } catch (IOException e) {
+        System.out.println("Error checking jar: " + file.getName());
+      }
+    }
+    return resources;
+  }
+
+  private static boolean isBlueMapResourceMod(ZipFile zipFile) throws ZipException {
+    return getTexturesAndModelsNStuff(zipFile).size() > 0;
+  }
+
+  private static TreeSet<String> getTexturesAndModelsNStuff(ZipFile zipFile) throws ZipException {
+    List<FileHeader> fileHeaderList = new ArrayList<>(zipFile.getFileHeaders());
+    TreeSet<String> entries = new TreeSet<>();
+    for (FileHeader header : fileHeaderList) {
+      if (header.getFileName().matches(matcher)) {
+        entries.add(header.getFileName());
+      }
+    }
+    return entries;
   }
 }
