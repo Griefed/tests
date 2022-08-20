@@ -30,7 +30,8 @@ jobs:
         run: |
           curl --header \
           'PRIVATE-TOKEN: ${{ secrets.GITLAB_TOKEN }}' \
-          'https://git.griefed.de/api/v4/projects/63/releases/${{ steps.tag.outputs.tag }}' >> version.json
+          'https://git.griefed.de/api/v4/projects/63/releases/3.12.0-beta.2' >> ./version.json
+          cat version.json
 
       # GET DESCRIPTION
       - name: Extract version from package.json
@@ -38,7 +39,7 @@ jobs:
         id: description
         with:
           cmd: 'jq .description version.json -r'
-          multiline: true
+#          multiline: true
 
       # GENERATE RELEASE
       - name: Create Release
