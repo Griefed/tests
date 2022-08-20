@@ -39,7 +39,7 @@ jobs:
         id: description
         with:
           cmd: 'jq .description version.json -r'
-#          multiline: true
+          multiline: true
 
       # GENERATE RELEASE
       - name: Create Release
