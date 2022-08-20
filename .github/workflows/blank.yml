@@ -25,6 +25,21 @@ jobs:
       - name: Use tag
         run: echo ${{steps.tag.outputs.tag}}
 
+      # GET RELEASE INFO
+      - name: Get Release Info
+        run: |
+          curl --header \
+          'PRIVATE-TOKEN: ${{ GITLAB_TOKEN }}' \
+          'https://git.griefed.de/api/v4/projects/63/releases/${{ steps.tag.outputs.tag }}' >> version.json
+
+      # GET DESCRIPTION
+      - name: Extract version from package.json
+        uses: sergeysova/jq-action@v2
+        id: description
+        with:
+          cmd: 'jq .description version.json -r'
+          multiline: true
+
       # GENERATE CHANGELOG
       - name: Parse Changelog Entry
         id: changelog
@@ -41,6 +56,6 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{steps.tag.outputs.tag}}
-          body: ${{ steps.changelog.outputs.description }}
+          body: ${{ steps.version.outputs.value }}
           draft: false
           prerelease: false
