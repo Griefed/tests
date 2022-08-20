@@ -23,13 +23,11 @@ jobs:
         run: echo ${{steps.tag.outputs.tag}}
 
       # GENERATE CHANGELOG
-      - name: Get Changelog Entry
-        id: changelog_reader
-        uses: mindsers/changelog-reader-action@v2
+      - name: Parse Changelog Entry
+        id: changelog
         with:
-          validation_level: warn
           version: ${{steps.tag.outputs.tag}}
-          path: ./CHANGELOG.md
+        uses: coditory/changelog-parser@v1
 
       # GENERATE RELEASE
       - name: Create Release
@@ -40,6 +38,6 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{steps.tag.outputs.tag}}
-          body: ${{ steps.changelog_reader.outputs.changes }}
+          body: ${{ steps.changelog.outputs.description }}
           draft: false
           prerelease: false
