@@ -29,7 +29,7 @@ jobs:
       - name: Get Release Info
         run: |
           curl --header \
-          'PRIVATE-TOKEN: ${{ GITLAB_TOKEN }}' \
+          'PRIVATE-TOKEN: ${{ secrets.GITLAB_TOKEN }}' \
           'https://git.griefed.de/api/v4/projects/63/releases/${{ steps.tag.outputs.tag }}' >> version.json
 
       # GET DESCRIPTION
