@@ -40,13 +40,6 @@ jobs:
           cmd: 'jq .description version.json -r'
           multiline: true
 
-      # GENERATE CHANGELOG
-      - name: Parse Changelog Entry
-        id: changelog
-        with:
-          version: ${{steps.tag.outputs.tag}}
-        uses: coditory/changelog-parser@v1
-
       # GENERATE RELEASE
       - name: Create Release
         id: create_release
