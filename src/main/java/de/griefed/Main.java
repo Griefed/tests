@@ -10,6 +10,7 @@ public class Main {
   private static final String BASE_URL = "https://meta.legacyfabric.net/";
   private static final String GAME_VERSIONS = BASE_URL + "v2/versions/game";
   private static final String LOADER_VERSIONS = BASE_URL + "v2/versions/loader";
+  private static final String AVAILABLE_LOADERS = BASE_URL + "versions/loader/%s";
   private static final String INSTALLER_VERSIONS = "https://maven.legacyfabric.net/net/legacyfabric/fabric-installer/maven-metadata.xml";
   private static final ObjectMapper MAPPER = new ObjectMapper()
       .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
@@ -60,5 +61,34 @@ public class Main {
     installerVersions.downloadFile("installer.jar",installerVersions.releaseURL());
 
     installerVersions.install("1.7.10","0.14.9");
+
+    System.out.println();
+    System.out.println("---------------------------------------------------------------------------");
+    System.out.println();
+
+    System.out.println("Loader Versions For Specific MC Versions:");
+    System.out.println("Stable:");
+    gameVersions.all().forEach(gameVersion -> {
+      try {
+        AvailableLoaders availableLoaders = new AvailableLoaders(gameVersion,MAPPER);
+
+        System.out.println("    Amount Stable: " + availableLoaders.releases().size());
+        System.out.println("    Amount Snapshot: " + availableLoaders.snapshots().size());
+        System.out.println("    Amount All: " + availableLoaders.all().size());
+        /*
+        System.out.println("    Stable:");
+        availableLoaders.releases().forEach(version -> System.out.println("        " + version));
+        System.out.println();
+        System.out.println();
+        System.out.println("    Snapshots:");
+        availableLoaders.snapshots().forEach(version -> System.out.println("        " + version));
+        System.out.println();
+        System.out.println("    All:");
+        availableLoaders.all().forEach(version -> System.out.println("        " + version));
+        */
+      } catch (Exception e) {
+        System.out.println("Not available for " + gameVersion);
+      }
+    });
   }
 }
