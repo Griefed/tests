@@ -169,8 +169,13 @@ public class ConfigurationModel {
     setIncludeServerProperties(config.getOrElse("includeServerProperties", false));
     setIncludeZipCreation(config.getOrElse("includeZipCreation", false));
 
-    for (Map.Entry<String, Object> entry : ((CommentedConfig) config.get("addons")).valueMap().entrySet()) {
-      addonsConfigs.put(entry.getKey(), (ArrayList<CommentedConfig>) entry.getValue());
+    try {
+      for (Map.Entry<String, Object> entry : ((CommentedConfig) config.get("addons")).valueMap()
+          .entrySet()) {
+        addonsConfigs.put(entry.getKey(), (ArrayList<CommentedConfig>) entry.getValue());
+      }
+    } catch (NullPointerException ignored) {
+
     }
 
     config.close();
@@ -179,6 +184,16 @@ public class ConfigurationModel {
   public HashMap<String, ArrayList<CommentedConfig>> getAddonsConfigs() {
     return addonsConfigs;
   }
+  
+  public ArrayList<CommentedConfig> getAddonConfigs(String addonId) {
+    if (addonsConfigs.containsKey(addonId)) {
+      return addonsConfigs.get(addonId);
+    } else {
+      return new ArrayList<>();
+    }
+  }
+
+
 
   /**
    * Getter for the suffix of the server pack to be generated.
