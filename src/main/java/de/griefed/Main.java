@@ -52,7 +52,7 @@ public class Main {
     manualConfig.set("serverPropertiesPath", configurationModel.getServerPropertiesPath());
 
     manualConfig.setComment("includeServerProperties",
-        " Include a server.properties in your serverpack. Must be true or false.\n Customize server.properties in ./server_files.\n If no server.properties is provided but is set to true, a default one will be provided.\n Default value is true.");
+        " Include a server.properties in your serverpack. Must be true or false.\n If no server.properties is provided but is set to true, a default one will be provided.\n Default value is true.");
     manualConfig.set("includeServerProperties", configurationModel.getIncludeServerProperties());
 
     manualConfig.setComment("javaArgs",
@@ -68,7 +68,7 @@ public class Main {
     manualConfig.set("modpackDir", configurationModel.getModpackDir());
 
     manualConfig.setComment("includeServerIcon",
-        " Include a server-icon.png in your serverpack. Must be true or false.\n Customize server-icon.png in ./server_files.\n Dimensions must be 64x64!\n Default value is true.");
+        " Include a server-icon.png in your serverpack. Must be true or false\n Default value is true.");
     manualConfig.set("includeServerIcon", configurationModel.getIncludeServerIcon());
 
     manualConfig.setComment("includeZipCreation",
