@@ -184,7 +184,7 @@ public class ConfigurationModel {
   public HashMap<String, ArrayList<CommentedConfig>> getAddonsConfigs() {
     return addonsConfigs;
   }
-  
+
   public ArrayList<CommentedConfig> getAddonConfigs(String addonId) {
     if (addonsConfigs.containsKey(addonId)) {
       return addonsConfigs.get(addonId);
@@ -192,7 +192,6 @@ public class ConfigurationModel {
       return new ArrayList<>();
     }
   }
-
 
 
   /**
