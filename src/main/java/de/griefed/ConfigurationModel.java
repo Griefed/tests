@@ -178,6 +178,15 @@ public class ConfigurationModel {
 
     }
 
+    try {
+      for (Map.Entry<String, Object> entry : ((CommentedConfig) config.get("scripts")).valueMap()
+          .entrySet()) {
+        scriptSettings.put(entry.getKey(), entry.getValue().toString());
+      }
+    } catch (NullPointerException ignored) {
+
+    }
+
     config.close();
   }
 

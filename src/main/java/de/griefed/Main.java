@@ -9,6 +9,9 @@ import com.electronwill.nightconfig.toml.TomlParser;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Main {
 
@@ -87,11 +90,52 @@ public class Main {
         " Which modloader to install. Must be either \"Forge\", \"Fabric\", \"Quilt\" or \"LegacyFabric\".\n Automatically set when projectID,fileID for modpackDir has been specified.\n Only needed if includeServerInstallation is true.");
     manualConfig.set("modLoader", configurationModel.getModLoader());
 
-    Config addons = TomlFormat.instance().createConfig();
+    Config addons = TomlFormat.newConfig();
     addons.valueMap().putAll(configurationModel.getAddonsConfigs());
+    manualConfig.setComment("addons"," Settings related to addons. An addon is identified by its ID.");
     manualConfig.set("addons", addons);
+
+    HashMap<String,String> scriptSettings = new HashMap<>();
+    scriptSettings.put("SPC_MINECRAFT_VERSION_SPC","abc");
+    scriptSettings.put("SPC_MODLOADER_SPC","def");
+    scriptSettings.put("SPC_MODLOADER_VERSION_SPC","ghi");
+    scriptSettings.put("SPC_JAVA_ARGS_SPC","jkl");
+    scriptSettings.put("SPC_JAVA_SPC","mno");
+    scriptSettings.put("SPC_FABRIC_INSTALLER_VERSION_SPC","pqr");
+    scriptSettings.put("SPC_QUILT_INSTALLER_VERSION_SPC","stu");
+    scriptSettings.put("SPC_LEGACYFABRIC_INSTALLER_VERSION_SPC","vwx");
+    scriptSettings.put("SPC_SOME_VALUE_SPC","something");
+    scriptSettings.put("SPC_ANOTHER_VALUE_SPC","another");
+    scriptSettings.put("SPC_HELLO_SPC","Is it me you are looking foooooor");
+    scriptSettings.put("SPC_FLYNN_LIVES_SPC","Now that's a big door");
+    scriptSettings.put("SPC_PRAISE_THE_LAMB_SPC","Kannema jajaja kannema");
+
+    Config scripts = TomlFormat.newConfig();
+    for (Map.Entry<String, String> entry : scriptSettings.entrySet()) {
+      if (!entry.getKey().equals("SPC_SERVERPACKCREATOR_VERSION_SPC") && !entry.getKey()
+          .equals("SPC_MINECRAFT_VERSION_SPC") && !entry.getKey()
+          .equals("SPC_MODLOADER_SPC") && !entry.getKey()
+          .equals("SPC_MODLOADER_VERSION_SPC") && !entry.getKey()
+          .equals("SPC_JAVA_ARGS_SPC") && !entry.getKey()
+          .equals("SPC_JAVA_SPC") && !entry.getKey()
+          .equals("SPC_FABRIC_INSTALLER_VERSION_SPC") && !entry.getKey()
+          .equals("SPC_QUILT_INSTALLER_VERSION_SPC") && !entry.getKey()
+          .equals("SPC_LEGACYFABRIC_INSTALLER_VERSION_SPC")) {
+        scripts.set(entry.getKey(),entry.getValue());
+      }
+    }
+    manualConfig.setComment("scripts"," Key-value pairs for start scripts. A given key in a start script is replaced with the value.");
+    manualConfig.set("scripts",scripts);
 
     TomlFormat.instance().createWriter()
         .write(manualConfig, afterConf, WritingMode.REPLACE, StandardCharsets.UTF_8);
+
+    tryChange(configurationModel);
+
+    System.out.println(configurationModel.getClientMods());
+  }
+
+  private static void tryChange(final ConfigurationModel configurationModel) {
+
   }
 }
