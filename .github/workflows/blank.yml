@@ -30,7 +30,7 @@ jobs:
         uses: sergeysova/jq-action@v2
         id: description
         with:
-          cmd: "jq .description version.json -r | sed -e 's/\\n/\n/g' > version.txt"
+          cmd: "jq .description version.json -r | sed -e 's/\\n/\\n/g' > version.txt"
 
       # GENERATE RELEASE
       - name: Create Release
