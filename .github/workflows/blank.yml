@@ -23,14 +23,14 @@ jobs:
         run: |
           curl --header \
           'PRIVATE-TOKEN: ${{ secrets.GITLAB_TOKEN }}' \
-          'https://git.griefed.de/api/v4/projects/63/releases/3.0.0' >> ${{ github.GITHUB_WORKSPACE }}/version.json
+          'https://git.griefed.de/api/v4/projects/63/releases/3.0.0' >> version.json
 
       # GET DESCRIPTION
       - name: Extract version from package.json
         uses: sergeysova/jq-action@v2
         id: description
         with:
-          cmd: "jq .description version.json -r | sed -e 's/\\n/\n/g' > ${{ github.GITHUB_WORKSPACE }}/version.txt"
+          cmd: "jq .description version.json -r | sed -e 's/\\n/\n/g' > version.txt"
 
       # GENERATE RELEASE
       - name: Create Release
@@ -40,6 +40,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: 3.0.0
           name: Release 3.0.0
-          body_path: ${{ github.GITHUB_WORKSPACE }}/version.txt
+          body_path: version.txt
           draft: true
           prerelease: false
