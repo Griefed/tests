@@ -57,9 +57,6 @@ public class FileBrowserFrame {
     mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
 
-    TreeScrollPane treeScrollPane = new TreeScrollPane(this, MODEL, FIELD);
-    mainPanel.add(treeScrollPane.getScrollPane(), BorderLayout.WEST);
-
     JPanel rightPanel = new JPanel();
     rightPanel.setLayout(new BorderLayout());
 
@@ -80,6 +77,9 @@ public class FileBrowserFrame {
     rightPanel.add(southPanel, BorderLayout.SOUTH);
 
     mainPanel.add(rightPanel, BorderLayout.CENTER);
+
+    TreeScrollPane treeScrollPane = new TreeScrollPane(this, MODEL, FIELD);
+    mainPanel.add(treeScrollPane.getScrollPane(), BorderLayout.WEST);
   }
 
   public void updateFileDetail(FileNode fileNode) {
