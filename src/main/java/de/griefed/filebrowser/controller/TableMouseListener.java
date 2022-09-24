@@ -1,13 +1,13 @@
 package de.griefed.filebrowser.controller;
 
 import de.griefed.filebrowser.model.FileNode;
-import de.griefed.filebrowser.view.DirectoryPopMenu;
+import de.griefed.filebrowser.view.SelectionPopMenu;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 
-public class TableMouseListener extends DirectoryPopMenu {
+public class TableMouseListener extends SelectionPopMenu {
 
   private final JTable TABLE;
 
@@ -33,9 +33,7 @@ public class TableMouseListener extends DirectoryPopMenu {
       FileNode fileNode = (FileNode) TABLE.getModel().getValueAt(rowindex, 5);
       File file = fileNode.getFile();
 
-      if (file.isDirectory()) {
-        show(TABLE, mouseEvent.getX(), mouseEvent.getY(),file);
-      }
+      show(TABLE, mouseEvent.getX(), mouseEvent.getY(), file);
     }
   }
 }

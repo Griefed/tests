@@ -8,7 +8,7 @@ import javax.swing.JTextField;
 
 public class ModpackDirectoryAction extends AbstractAction {
 
-  protected File directory = null;
+  private File directory = null;
   private final JTextField FIELD;
 
   public ModpackDirectoryAction(JTextField jTextField) {

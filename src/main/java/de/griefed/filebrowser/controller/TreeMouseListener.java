@@ -1,7 +1,7 @@
 package de.griefed.filebrowser.controller;
 
 import de.griefed.filebrowser.model.FileNode;
-import de.griefed.filebrowser.view.DirectoryPopMenu;
+import de.griefed.filebrowser.view.SelectionPopMenu;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import javax.swing.JTextField;
@@ -9,7 +9,7 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-public class TreeMouseListener extends DirectoryPopMenu {
+public class TreeMouseListener extends SelectionPopMenu {
 
   private final JTree TREE;
 
@@ -29,9 +29,7 @@ public class TreeMouseListener extends DirectoryPopMenu {
         FileNode fileNode = (FileNode) treeNode.getUserObject();
         File file = fileNode.getFile();
 
-        if (file.isDirectory()) {
-          show(TREE, mouseEvent.getX(), mouseEvent.getY(), file);
-        }
+        show(TREE, mouseEvent.getX(), mouseEvent.getY(), file);
       }
 
     }
