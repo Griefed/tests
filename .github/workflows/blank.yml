@@ -32,6 +32,26 @@ jobs:
         with:
           cmd: "jq .description version.json -r | sed -e 's/\\n/\\n/g' > version.txt"
 
+      - name: Pre-Release Info
+        run: |
+          ADDENDUM=$(cat << EOF
+          
+          ---
+          
+          ### About Pre-Releases
+          
+          #### Alphas
+          
+          Alphas are feature-incomplete and very likely to have bugs. Before submitting an issue, please check the corresponding [milestone](https://git.griefed.de/Griefed/ServerPackCreator/-/milestones) of this releases major version to see whether an issue for yours already exists there.
+          Doing saves both you and me a lot of time. Thanks in advance!
+          
+          #### Betas
+          
+          Betas are feature-complete and probably have bugs.
+          EOF
+          )
+          echo $ADDENDUM >> version.txt
+
       # GENERATE RELEASE
       - name: Create Release
         id: create_release
