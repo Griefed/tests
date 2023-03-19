@@ -1,60 +1,56 @@
 package de.griefed.filebrowser.view;
 
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.extras.FlatAnimatedLafChange;
+import com.formdev.flatlaf.extras.components.FlatButton;
 import de.griefed.filebrowser.model.FileNode;
-import java.awt.Desktop;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 public class DesktopButtonPanel {
 
-  private FileNode fileNode;
+    private FileNode fileNode;
 
-  private JPanel panel;
+    private JPanel panel;
 
-  public DesktopButtonPanel(JTextField textField) {
-    createPartControl(textField);
-  }
-
-  private void createPartControl(JTextField textField) {
-    panel = new JPanel();
-    panel.add(textField);
-
-    //JButton openButton = new JButton("Open");
-    //openButton.addActionListener(new OpenListener());
-  }
-
-  public void setFileNode(FileNode fileNode) {
-    this.fileNode = fileNode;
-  }
-
-  public JPanel getPanel() {
-    return panel;
-  }
-
-  /*public class OpenListener implements ActionListener {
-
-    @Override
-    public void actionPerformed(ActionEvent event) {
-      openFile(fileNode);
+    public DesktopButtonPanel(JTextField textField) {
+        createPartControl(textField);
     }
 
-    private void openFile(FileNode fileNode) {
-      if (fileNode.getFile().isFile()) {
-        if (Desktop.isDesktopSupported()) {
-          Desktop desktop = Desktop.getDesktop();
-          if (desktop.isSupported(Desktop.Action.OPEN)) {
+    private void createPartControl(JTextField textField) {
+        panel = new JPanel();
+        panel.add(textField);
+
+        FlatButton themeButton = new FlatButton();
+        themeButton.setText("Switch Theme");
+        themeButton.addActionListener(new ThemeListener());
+        panel.add(themeButton);
+    }
+
+    public void setFileNode(FileNode fileNode) {
+        this.fileNode = fileNode;
+    }
+
+    public JPanel getPanel() {
+        return panel;
+    }
+
+    public static class ThemeListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
             try {
-              desktop.open(fileNode.getFile());
-            } catch (IOException e) {
-              e.printStackTrace();
+                FlatAnimatedLafChange.showSnapshot();
+                UIManager.setLookAndFeel(new FlatDarculaLaf());
+                FlatDarculaLaf.updateUI();
+                FlatAnimatedLafChange.hideSnapshotWithAnimation();
+            } catch (UnsupportedLookAndFeelException ex) {
+                throw new RuntimeException(ex);
             }
-          }
         }
-      }
     }
-
-  }*/
 }
