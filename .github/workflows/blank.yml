@@ -45,9 +45,13 @@ jobs:
           path: misc/INFO.md
 
       - name: Append Release Info
-        run: |
-          echo ${{ steps.preinfo.outputs.content }} >> version.txt
-          echo ${{ steps.info.outputs.content }} >> version.txt
+        uses: "DamianReeves/write-file-action@master"
+        with:
+          path: version.txt
+          write-mode: append
+          contents: |
+            ${{ steps.preinfo.outputs.content }}
+            ${{ steps.info.outputs.content }}
 
       # GENERATE RELEASE
       - name: Create Release
