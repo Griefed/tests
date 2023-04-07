@@ -16,5 +16,6 @@ jobs:
 
       - name: Newline Test
         run: |
-          dir .`
-            ls 
+          whomai `
+            ls `
+            dir .
