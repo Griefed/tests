@@ -16,5 +16,5 @@ jobs:
 
       - name: Newline Test
         run: |
-          dir `
-            ls `
+          dir .`
+            ls 
