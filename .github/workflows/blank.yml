@@ -23,7 +23,7 @@ jobs:
         run: |
           curl --header \
           'PRIVATE-TOKEN: ${{ secrets.GITLAB_TOKEN }}' \
-          'https://git.griefed.de/api/v4/projects/63/releases/4.0.0' >> version.json
+          'https://git.griefed.de/api/v4/projects/63/releases/3.0.0' >> version.json
 
       # GET DESCRIPTION
       - name: Extract version from package.json
@@ -49,7 +49,7 @@ jobs:
 
       - name: Check length and truncate if needed
         run: |
-          if [[ $(wc -c version.txt) >= 100 ]]; then
+          if [[ $(wc -c version.txt | awk '{print $1}') -ge 5000 ]]; then
             release=$(cat version.txt)
             echo ${release:0:100} > version.txt
             echo "......\nRelease notes truncated. For more details, see the [CHANGELOG](https://github.com/Griefed/ServerPackCreator/blob/main/CHANGELOG.md).\n\n" | sed -e 's/\\n/\\n/g' >> version.txt
@@ -70,8 +70,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: 4.0.0
-          name: Release 4.0.0
+          tag_name: 3.0.0
+          name: Release 3.0.0
           body_path: version.txt
           draft: true
           prerelease: false
