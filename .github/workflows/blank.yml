@@ -30,7 +30,7 @@ jobs:
         uses: sergeysova/jq-action@v2
         id: description
         with:
-          cmd: "jq .description version.json -r | sed -e 's/\\n/\\n/g' > version.txt >> version.txt"
+          cmd: "jq .description version.json -r | sed -e 's/\\n/\\n/g' > version.txt"
 
       - name: Pre-Release Info
         id: preinfo
@@ -43,6 +43,9 @@ jobs:
         uses: jaywcjlove/github-action-read-file@main
         with:
           path: misc/INFO.md
+
+      - name: Dafuq
+        run: sudo chown $USER version.txt
 
       - name: Append Release Info
         uses: "DamianReeves/write-file-action@master"
