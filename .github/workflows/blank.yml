@@ -51,8 +51,8 @@ jobs:
         run: |
           if [[ $(wc -c version.txt | awk '{print $1}') -ge 5000 ]]; then
             release=$(cat version.txt)
-            echo ${release:0:100} > version.txt
-            echo "......\nRelease notes truncated. For more details, see the [CHANGELOG](https://github.com/Griefed/ServerPackCreator/blob/main/CHANGELOG.md).\n\n" | sed -e 's/\\n/\\n/g' >> version.txt
+            echo ${release:0:5000} > version.txt
+            echo "......\nRelease notes truncated. For more details, see the [CHANGELOG](https://github.com/Griefed/ServerPackCreator/blob/main/CHANGELOG.md).\n\n" >> version.txt
           fi
 
       - name: Append Release Info
