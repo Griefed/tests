@@ -33,10 +33,17 @@ jobs:
           cmd: "jq .description version.json -r | sed -e 's/\\n/\\n/g' > version.txt && echo \"\n\n---\n\n### About Pre-Releases\n\n#### Alphas\n\nAlphas are feature-incomplete and very likely to have bugs. Before submitting an issue, please check the corresponding [milestone](https://git.griefed.de/Griefed/ServerPackCreator/-/milestones) of this releases major version to see whether an issue for yours already exists there.\nDoing so saves both you and me a lot of time. Thanks in advance!\n\n#### Betas\n\nBetas are feature-complete and probably have bugs.\" | sed -e 's/\\n/\\n/g' >> version.txt"
 
       - name: Pre-Release Info
-        run: cat misc/PRE-INFO.md >> version.txt
+        id: preinfo
+        run: echo "preinfo=$(cat misc/PRE-INFO.md)" >> $GITHUB_OUTPUT
 
       - name: General Info
-        run: cat misc/INFO.md >> version.txt
+        id: info
+        run: echo "info=$(cat misc/INFO.md)" >> $GITHUB_OUTPUT
+
+      - name: Append Release Info
+        run: |
+          echo ${{ steps.preinfo.outputs.preinfo }} >> version.txt
+          echo ${{ steps.info.outputs.info }} >> version.txt
 
       # GENERATE RELEASE
       - name: Create Release
